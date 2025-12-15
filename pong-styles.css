@@ -12,7 +12,7 @@ body {
   margin: 20px auto; /* center horizontally */
   border: 5px solid black;
   position: relative; /* avoid absolute top-left layout issues in some browsers */
-  background-image: url("paper.gif");
+  background-color: #90EE90; /* light green background */
   background-size: cover;
   top: 0;
 }
@@ -70,7 +70,7 @@ body {
 
 .paddle {
   top: 0;
-  width: 5px;
+  width: 15px; /* wider paddles */
   position: absolute;
 }
 

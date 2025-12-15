@@ -152,6 +152,10 @@ var rightScoreDisplay = document.getElementById("right-score");
 var leftScore = 0;
 var rightScore = 0;
 
+//Progressive Speed Increase
+var totalScore = 0; //combined score to track game progression
+var speedMultiplier = 10.0; //multiplier for ball speed based on score
+
 //Computer Control
 var computerDirection = 0; //computer control paddle direction
 var computerDirectionOld = 0; //computer control paddle direction storage
@@ -191,6 +195,11 @@ requestAnimationFrame(update); // start the game loop
 function scoreDisplayUpdate() {
   leftScoreDisplay.innerHTML = leftScore;
   rightScoreDisplay.innerHTML = rightScore;
+  
+  // Update progressive speed based on total score
+  totalScore = leftScore + rightScore;
+  speedMultiplier = 10.0 + (totalScore * 1); // 10% speed increase per point
+  console.log("[PONG] Speed multiplier:", speedMultiplier.toFixed(2), "(total score:", totalScore, ")");
 }
 
 function updateBall() {
@@ -204,27 +213,27 @@ function updateBall() {
   //Right Wall
   if (newBallPos.x + ball.size.x > game.size.x - game.padding.x) {
     ball.position.x = game.size.x - game.padding.x;
-    ball.direction.x = -Math.abs(ball.direction.x + ball.acceleration);
-    ball.direction.y += paddleRight.velocity.y * -1 * ball.inertialTransfer;
-    ball.direction.y += randomAdjust(1, false);
-    //check for leftscore via paddleRight position
+    //check for leftscore via paddleRight position (right paddle missed the ball)
     if (
-      ball.position.y + paddleRight.size.y / 2 < paddleRight.position.y ||
-      ball.position.y > paddleRight.position.y + paddleRight.size.y
+      ball.position.y + ball.size.y / 2 < paddleRight.position.y ||
+      ball.position.y + ball.size.y / 2 > paddleRight.position.y + paddleRight.size.y
     ) {
-      //only count the score if the other paddle has hit
-      if (paddleLeft.hasHit) {
-        leftScore += 1;
-        scoreDisplayUpdate();
-        leftScoreHit.turnOn();
-        paddleLeft.hasHit = false;
-      } else {
-        ballHitWall.turnOn();
-      }
+      //right paddle missed — left scores
+      leftScore += 1;
+      scoreDisplayUpdate();
+      leftScoreHit.turnOn();
+      console.log("[PONG] Left scores! Left:", leftScore, "Right:", rightScore);
+      ballHitWall.turnOn();
       ball.position.x = game.size.x - game.padding.x;
-      ball.direction.x = ball.initial.x * -1; //reset ball speed
+      ball.direction.x = ball.initial.x * -1 * speedMultiplier; //reset ball speed with multiplier
       ball.direction.y = ball.initial.y;
+      paddleLeft.hasHit = false;
+      paddleRight.hasHit = false;
     } else {
+      //right paddle hit the ball
+      ball.direction.x = -Math.abs(ball.direction.x + ball.acceleration) * speedMultiplier;
+      ball.direction.y += paddleRight.velocity.y * -1 * ball.inertialTransfer;
+      ball.direction.y += randomAdjust(1, false);
       ballHitPaddle.turnOn();
       paddleRight.hasHit = true;
     }
@@ -237,27 +246,27 @@ function updateBall() {
   //Left Wall
   if (newBallPos.x < game.padding.x) {
     ball.position.x = game.padding.x;
-    ball.direction.x = Math.abs(ball.direction.x - ball.acceleration);
-    ball.direction.y += paddleLeft.velocity.y * -1 * ball.inertialTransfer;
-    ball.direction.y += randomAdjust(1, false);
-    //check for rightScore via paddleLeft position
+    //check for rightScore via paddleLeft position (left paddle missed the ball)
     if (
-      ball.position.y + paddleLeft.size.y / 2 < paddleLeft.position.y ||
-      ball.position.y > paddleLeft.position.y + paddleLeft.size.y
+      ball.position.y + ball.size.y / 2 < paddleLeft.position.y ||
+      ball.position.y + ball.size.y / 2 > paddleLeft.position.y + paddleLeft.size.y
     ) {
-      //only count the score if the other paddle has hit
-      if (paddleRight.hasHit) {
-        rightScore += 1;
-        scoreDisplayUpdate();
-        rightScoreHit.turnOn();
-        paddleRight.hasHit = false;
-      } else {
-        ballHitWall.turnOn();
-      }
+      //left paddle missed — right scores
+      rightScore += 1;
+      scoreDisplayUpdate();
+      rightScoreHit.turnOn();
+      console.log("[PONG] Right scores! Left:", leftScore, "Right:", rightScore);
+      ballHitWall.turnOn();
       ball.position.x = game.padding.x;
-      ball.direction.x = ball.initial.x; //reset ball speed
+      ball.direction.x = ball.initial.x * speedMultiplier; //reset ball speed with multiplier
       ball.direction.y = ball.initial.y;
+      paddleLeft.hasHit = false;
+      paddleRight.hasHit = false;
     } else {
+      //left paddle hit the ball
+      ball.direction.x = Math.abs(ball.direction.x - ball.acceleration) * speedMultiplier;
+      ball.direction.y += paddleLeft.velocity.y * -1 * ball.inertialTransfer;
+      ball.direction.y += randomAdjust(1, false);
       ballHitPaddle.turnOn();
       paddleLeft.hasHit = true;
     }
