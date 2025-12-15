@@ -9,12 +9,12 @@ body {
   margin: 0;
 }
 #game {
-  margin: 4px;
+  margin: 20px auto; /* center horizontally */
   border: 5px solid black;
-  left: 0;
-  position: absolute;
+  position: relative; /* avoid absolute top-left layout issues in some browsers */
   background-image: url("paper.gif");
   background-size: cover;
+  top: 0;
 }
 
 #left-paddle {
@@ -77,7 +77,7 @@ body {
 .ball {
   width: 15px;
   height: 15px;
-  background-color: yellow;
+  background-color: plum;
   border-radius: 10px;
   position: absolute;
   left: 50px;

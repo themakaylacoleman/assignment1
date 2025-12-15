@@ -5,16 +5,26 @@ If you create a new player, be sure to import it at the top of index.js!
 //import * as Tone from "../lib/Tone.js";
 
 class soundFile {
-  constructor(file, deferPlay) {
-    //this.deferPlay = false;
+  constructor(file) {
+    this.file = file;
+    this.deferPlay = false;
+    this.player = null; // created later via initAudio()
+  }
+  //Create the Tone.Player for this sound (call when Tone is available)
+  createPlayer() {
+    if (typeof Tone === "undefined") return;
     this.player = new Tone.Player({
-      url: "./sounds/" + file,
+      url: "./sounds/" + this.file,
       loop: false,
       autostart: false
     }).toMaster();
   }
   //Play function also with pre-stop and deferred playing
   play() {
+    if (!this.player) {
+      this.deferPlay = true;
+      return;
+    }
     //defer playback if sound isn't finished loading
     if (this.player.loaded === true) {
       this.deferPlay = false;
@@ -26,7 +36,7 @@ class soundFile {
   }
   //Stop function that may have easier syntax
   stop() {
-    this.player.stop();
+    if (this.player) this.player.stop();
   }
 }
 
@@ -54,15 +64,41 @@ soundArray.push(scoreSound);
 
 export var ambientSound = new soundFile("brown.mp3");
 soundArray.push(ambientSound);
-ambientSound.player.loop = true; //turn on looping
-ambientSound.player.volume.value = -20; //turn down volume
 
 export var adventureMusic = new soundFile("silence.mp3");
 soundArray.push(adventureMusic);
-adventureMusic.player.loop = true;
-adventureMusic.player.volume.value = -16;
 
 export var villageMusic = new soundFile("silence.mp3");
 soundArray.push(villageMusic);
-villageMusic.player.loop = true;
-villageMusic.player.volume.value = -16;
+
+//Initialize all players when Tone becomes available. Returns a Promise that
+//resolves when all players have been created (loading may still be async).
+export function initAudio() {
+  return new Promise(resolve => {
+    if (typeof Tone === "undefined") {
+      // Try again after a short delay — Tone is likely loaded as a classic script
+      setTimeout(() => {
+        initAudio().then(resolve);
+      }, 50);
+      return;
+    }
+    // create all players
+    for (var i = 0; i < soundArray.length; i++) {
+      soundArray[i].createPlayer();
+    }
+    // Apply per-player settings
+    if (ambientSound.player) {
+      ambientSound.player.loop = true;
+      ambientSound.player.volume.value = -20;
+    }
+    if (adventureMusic.player) {
+      adventureMusic.player.loop = true;
+      adventureMusic.player.volume.value = -16;
+    }
+    if (villageMusic.player) {
+      villageMusic.player.loop = true;
+      villageMusic.player.volume.value = -16;
+    }
+    resolve();
+  });
+}

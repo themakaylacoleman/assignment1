@@ -15,7 +15,8 @@ import {
   ambientSound,
   adventureMusic,
   villageMusic,
-  playDeferredSounds
+  playDeferredSounds,
+  initAudio
 } from "./pong-audio.js";
 //Defaults for game objects
 import { Game, Ball, Paddle } from "./pong-classes.js";
@@ -43,25 +44,40 @@ import { clamp, scalerange, randomAdjust, boolToOnOff } from "./pong-util.js";
 var updateInterval = 20; //game framerate
 var game = new Game();
 game.htmlElement = document.getElementById("game");
+console.log("[PONG] Game element found:", game.htmlElement);
 var ball = new Ball();
 ball.htmlElement = document.getElementById("ball");
 ballReset();
+console.log("[PONG] Ball initialized at:", ball.position);
 var paddleArray = [];
 var paddleLeft = new Paddle();
 paddleLeft.controller = "player1";
 paddleLeft.htmlElement = document.getElementById("left-paddle");
 paddleArray.push(paddleLeft);
+console.log("[PONG] Left paddle found:", paddleLeft.htmlElement);
 //If the game is too hard, make your paddle bigger, but don't go too big!
 //paddleLeft.size.y = 150;
 var paddleRight = new Paddle();
 paddleRight.controller = "player2";
 paddleRight.htmlElement = document.getElementById("right-paddle");
 paddleArray.push(paddleRight);
+console.log("[PONG] Right paddle found:", paddleRight.htmlElement);
 paddlesReset();
+console.log("[PONG] Paddles reset at positions:", paddleLeft.position, paddleRight.position);
 //END OF GAME OBJECTS///
 
 //STARTUP EVENTS
-ambientSound.play();
+console.log("[PONG] Starting initialization...");
+// Initialize audio (ensures Tone is available) then play ambient
+initAudio().then(() => {
+  console.log("[PONG] Audio initialized, attempting to play ambient sound");
+  try {
+    ambientSound.play();
+    console.log("[PONG] Ambient sound started");
+  } catch (e) {
+    console.warn("ambientSound.play failed:", e);
+  }
+});
 
 //RUNNING PROCESSES (updated every frame of the game)
 function gameProcess() {
@@ -140,8 +156,16 @@ var rightScore = 0;
 var computerDirection = 0; //computer control paddle direction
 var computerDirectionOld = 0; //computer control paddle direction storage
 
-//Main Update Loop
-var update = function() {
+//Main Update Loop (using requestAnimationFrame for better timing)
+var lastUpdateTime = 0;
+var update = function(currentTime) {
+  // Throttle to ~50 FPS (updateInterval = 20ms)
+  if (currentTime - lastUpdateTime < updateInterval) {
+    requestAnimationFrame(update);
+    return;
+  }
+  lastUpdateTime = currentTime;
+  
   try {
     controlUpdate();
     updateComputer();
@@ -154,12 +178,15 @@ var update = function() {
   } catch (error) {
     //make critical errors stop the update
     gameErrors.innerHTML = error;
+    console.error("[PONG] Update error:", error);
     console.log(error);
-    clearInterval(run);
   }
+  
+  requestAnimationFrame(update);
 };
 
-var run = setInterval(update, updateInterval); // this is the master update interval
+console.log("[PONG] Starting game loop with requestAnimationFrame");
+requestAnimationFrame(update); // start the game loop
 
 function scoreDisplayUpdate() {
   leftScoreDisplay.innerHTML = leftScore;
