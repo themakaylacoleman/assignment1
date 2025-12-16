@@ -41,7 +41,7 @@ import { clamp, scalerange, randomAdjust, boolToOnOff } from "./pong-util.js";
 //import * as Tone from "../lib/Tone.js";
 
 //GAME OBJECTS///DON'T CHANGE THESE
-var updateInterval = 20; //game framerate
+var updateInterval = 8; //game framerate (120 FPS)
 var game = new Game();
 game.htmlElement = document.getElementById("game");
 console.log("[PONG] Game element found:", game.htmlElement);
@@ -152,9 +152,9 @@ var rightScoreDisplay = document.getElementById("right-score");
 var leftScore = 0;
 var rightScore = 0;
 
-//Progressive Speed Increase
-var totalScore = 0; //combined score to track game progression
-var speedMultiplier = 10.0; //multiplier for ball speed based on score
+//Progressive Speed Increase (rally-based)
+var rallyCount = 0; //count paddle hits in current rally
+var speedMultiplier = 2.0; //multiplier increases with each paddle hit, resets on score
 
 //Computer Control
 var computerDirection = 0; //computer control paddle direction
@@ -175,7 +175,7 @@ var update = function(currentTime) {
     updateComputer();
     paddlesUpdate();
     updateBall();
-    ballCheckMax();
+    ballCheckMax(); // prevent tunneling/escape at high speeds
     gameProcess();
     eventsReset();
     playDeferredSounds();
@@ -196,10 +196,10 @@ function scoreDisplayUpdate() {
   leftScoreDisplay.innerHTML = leftScore;
   rightScoreDisplay.innerHTML = rightScore;
   
-  // Update progressive speed based on total score
-  totalScore = leftScore + rightScore;
-  speedMultiplier = 10.0 + (totalScore * 1); // 10% speed increase per point
-  console.log("[PONG] Speed multiplier:", speedMultiplier.toFixed(2), "(total score:", totalScore, ")");
+  // Reset rally and speed multiplier when a point is scored
+  rallyCount = 0;
+  speedMultiplier = 1.0;
+  console.log("[PONG] Point scored! Speed reset to 1.0x");
 }
 
 function updateBall() {
@@ -211,12 +211,11 @@ function updateBall() {
 
   //Wall Collisions
   //Right Wall
-  if (newBallPos.x + ball.size.x > game.size.x - game.padding.x) {
-    ball.position.x = game.size.x - game.padding.x;
+  if (newBallPos.x + ball.size.x > game.size.x - game.padding.x - paddleRight.size.x) {
     //check for leftscore via paddleRight position (right paddle missed the ball)
     if (
-      ball.position.y + ball.size.y / 2 < paddleRight.position.y ||
-      ball.position.y + ball.size.y / 2 > paddleRight.position.y + paddleRight.size.y
+      newBallPos.y + ball.size.y <= paddleRight.position.y ||
+      newBallPos.y >= paddleRight.position.y + paddleRight.size.y
     ) {
       //right paddle missed — left scores
       leftScore += 1;
@@ -231,6 +230,12 @@ function updateBall() {
       paddleRight.hasHit = false;
     } else {
       //right paddle hit the ball
+      rallyCount++;
+      if (rallyCount < 20) {
+        speedMultiplier *= 1.05; // multiply speed by 1.05 per paddle hit
+      }
+      console.log("[PONG] Paddle hit! Rally:", rallyCount, "Speed:", speedMultiplier.toFixed(2), "x");
+      ball.position.x = game.size.x - game.padding.x - paddleRight.size.x;
       ball.direction.x = -Math.abs(ball.direction.x + ball.acceleration) * speedMultiplier;
       ball.direction.y += paddleRight.velocity.y * -1 * ball.inertialTransfer;
       ball.direction.y += randomAdjust(1, false);
@@ -244,12 +249,12 @@ function updateBall() {
     ballHitWall.turnOn();
   }
   //Left Wall
-  if (newBallPos.x < game.padding.x) {
-    ball.position.x = game.padding.x;
+  //Left Wall
+  if (newBallPos.x < game.padding.x + paddleLeft.size.x) {
     //check for rightScore via paddleLeft position (left paddle missed the ball)
     if (
-      ball.position.y + ball.size.y / 2 < paddleLeft.position.y ||
-      ball.position.y + ball.size.y / 2 > paddleLeft.position.y + paddleLeft.size.y
+      newBallPos.y + ball.size.y <= paddleLeft.position.y ||
+      newBallPos.y >= paddleLeft.position.y + paddleLeft.size.y
     ) {
       //left paddle missed — right scores
       rightScore += 1;
@@ -264,6 +269,12 @@ function updateBall() {
       paddleRight.hasHit = false;
     } else {
       //left paddle hit the ball
+      rallyCount++;
+      if (rallyCount < 20) {
+        speedMultiplier *= 1.05; // multiply speed by 1.05 per paddle hit
+      }
+      console.log("[PONG] Paddle hit! Rally:", rallyCount, "Speed:", speedMultiplier.toFixed(2), "x");
+      ball.position.x = game.padding.x + paddleLeft.size.x;
       ball.direction.x = Math.abs(ball.direction.x - ball.acceleration) * speedMultiplier;
       ball.direction.y += paddleLeft.velocity.y * -1 * ball.inertialTransfer;
       ball.direction.y += randomAdjust(1, false);

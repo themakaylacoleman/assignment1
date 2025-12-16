@@ -21,12 +21,14 @@ body {
   background-color: yellow;
   left: 10px;
   height: 25px;
+  border-radius: 10px;
 }
 
 #right-paddle {
-  background-color: black;
+  background-color: white;
   right: 10px;
- 
+  height: 25px;
+ border-radius: 10px;
   
 }
 
