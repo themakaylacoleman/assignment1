@@ -19,21 +19,33 @@ class soundFile {
       autostart: false
     }).toMaster();
   }
-  //Play function also with pre-stop and deferred playing
-  play() {
-    if (!this.player) {
-      this.deferPlay = true;
-      return;
-    }
-    //defer playback if sound isn't finished loading
-    if (this.player.loaded === true) {
-      this.deferPlay = false;
+  //Play function with correct handling for looping sounds
+play() {
+  if (!this.player) {
+    this.deferPlay = true;
+    return;
+  }
+
+  // Defer playback if sound isn't finished loading
+  if (this.player.loaded === true) {
+    this.deferPlay = false;
+
+    if (this.player.loop) {
+      // Background music: start only once
+      if (this.player.state !== "started") {
+        this.player.start();
+      }
+    } else {
+      // Sound effects: restart every time
       this.player.stop();
       this.player.start();
-    } else {
-      this.deferPlay = true;
     }
+
+  } else {
+    this.deferPlay = true;
   }
+}
+
   //Stop function that may have easier syntax
   stop() {
     if (this.player) this.player.stop();
@@ -62,7 +74,7 @@ soundArray.push(paddleSound);
 export var scoreSound = new soundFile("silence.mp3");
 soundArray.push(scoreSound);
 
-export var ambientSound = new soundFile("brown.mp3");
+export var ambientSound = new soundFile("pajamaparties.mp3");
 soundArray.push(ambientSound);
 
 export var adventureMusic = new soundFile("silence.mp3");
