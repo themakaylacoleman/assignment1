@@ -36,8 +36,10 @@ play() {
         this.player.start();
       }
     } else {
-      // Sound effects: restart every time
-      this.player.stop();
+      // Sound effects: use restart for lower latency
+      if (this.player.state === "started") {
+        this.player.stop();
+      }
       this.player.start();
     }
 
@@ -68,7 +70,7 @@ export var soundArray = []; //list of sounds loaded
 export var wallSound = new soundFile("silence.mp3"); //load sound
 soundArray.push(wallSound); //add sound to list of sounds
 
-export var paddleSound = new soundFile("marimba.mp3");
+export var paddleSound = new soundFile("marimba2.m4a");
 soundArray.push(paddleSound);
 
 export var scoreSound = new soundFile("silence.mp3");
@@ -101,7 +103,7 @@ export function initAudio() {
     // Apply per-player settings
     if (ambientSound.player) {
       ambientSound.player.loop = true;
-      ambientSound.player.volume.value = -20;
+      ambientSound.player.volume.value = -30;
     }
     if (adventureMusic.player) {
       adventureMusic.player.loop = true;

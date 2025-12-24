@@ -12,8 +12,7 @@ body {
   margin: 20px auto; /* center horizontally */
   border: 5px solid black;
   position: relative; /* avoid absolute top-left layout issues in some browsers */
-  background-image: url("/12.jpg");
-  background-size: cover;
+  background-color: #90EE90; /* light green background */
   top: 0;
 }
 
