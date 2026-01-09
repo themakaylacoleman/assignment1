@@ -103,7 +103,10 @@ export function initAudio() {
     // Apply per-player settings
     if (ambientSound.player) {
       ambientSound.player.loop = true;
-      ambientSound.player.volume.value = -30;
+      ambientSound.player.volume.value = -10;
+    }
+    if (paddleSound.player) {
+      paddleSound.player.volume.value = -20;
     }
     if (adventureMusic.player) {
       adventureMusic.player.loop = true;
